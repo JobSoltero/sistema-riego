@@ -17,7 +17,7 @@ var connection = mysql.createConnection({
 });
 
 //--- Hacer peticion al servidor de arduino cada x tiempo
-var sync =  setInterval(function(){
+var sync1 =  setInterval(function(){
      console.log('Hacer peticion');
      fetch(addressArduino).then(function(res) {
         return res.json();
@@ -26,7 +26,19 @@ var sync =  setInterval(function(){
     });
 }, 1000);     // Cada n milisegundos ejecuta la fn anonima
 
-var sync =  setInterval(function(){
+
+//--- Hacer peticion al servidor de arduino cada x tiempo
+var sync2 =  setInterval(function(){
+    console.log('Hacer peticion');
+    fetch('http://smn.cna.gob.mx/webservices/index.php?method=1').then(function(res) {
+        return res.json();
+    }).then(function(json) {
+        fnInsertMet(json);
+    });
+}, 1000);     // Cada n milisegundos ejecuta la fn anonima
+
+
+var sync3 =  setInterval(function(){
      console.log('Hacer peticion');
      fnSelect();
 }, 1000);     // Cada n milisegundos ejecuta la fn anonima
@@ -83,14 +95,34 @@ function fnInsert(json) {
        }
    }); // connect
    var query = connection.query(
-       'INSERT INTO arduinoguardar(Iluminacion,Temperatura,Humedad,Sillueve) VALUES(?,?,?,?)',[json.iluminacion,j.temperatura,json.humedad,'0'], function(error, result){
+       'INSERT INTO arduinoguardar(iluminacion,temperatura,humedad) VALUES(?,?,?)',[json.iluminacion,json.temperatura,json.humedad], function(error, result){
            if(error){
                throw error;
            }else{
                console.log(result);
            }
        }
-   ); // query
+   );
+    function fnInsertMet(ProbabilityOfPrecip) {
+        connection.connect(function(error){
+            if(error){
+                throw error;
+            }else{
+                console.log('Conexion correcta.');
+            }
+        }); // connect
+        var query = connection.query(
+            'INSERT INTO meteorologia(probLluvia) VALUES(?)',[ProbabilityOfPrecip], function(error, result){
+                if(error){
+                    throw error;
+                }else{
+                    console.log(result);
+                }
+            }
+        );
+
+
+   // query
    connection.end();
 } // fn
 
