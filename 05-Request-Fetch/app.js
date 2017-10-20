@@ -1,4 +1,6 @@
 'use strict'
+var fileType = require('file-type');
+var zlib = require('zlib');
 var mysql = require('mysql');
 var fetch = require('node-fetch');
 const http = require('http')
@@ -27,14 +29,34 @@ var sync1 =  setInterval(function(){
 }, 1000);     // Cada n milisegundos ejecuta la fn anonima
 
 
-//--- Hacer peticion al servidor de arduino cada x tiempo
+//--- Hacer peticion al servidor de smn cada x tiempo
 var sync2 =  setInterval(function(){
-    console.log('Hacer peticion');
-    fetch('http://smn.cna.gob.mx/webservices/index.php?method=1').then(function(res) {
-        return res.json();
-    }).then(function(json) {
-        fnInsertMet(json);
+
+    fetch('http://smn.cna.gob.mx/webservices/index.php?method=1')
+        .then(function(res) {
+            return res.buffer();
+        }).then(function(buffer) {
+        fileType(buffer);
+        zlib.gunzip(buffer,function(error, buff){
+            if(error != null){
+                //An error occured while unzipping the .gz file.
+            }
+            else{
+                //Use the buff which contains the unzipped JSON.
+                var _ = require("underscore");
+
+                var json = '[{"user": "a", "age": 20}, {"user": "b", "age": 30}, {"user": "c", "age": 40}]';
+
+                var smn = JSON.parse(buff);
+
+                var filtered = _.where(smn, {CityId:"MXJO0047"});
+
+                fnInsert(filtered[0].ProbabilityOfPrecip)
+            }
+        });
     });
+
+
 }, 1000);     // Cada n milisegundos ejecuta la fn anonima
 
 
